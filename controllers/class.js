@@ -1,4 +1,5 @@
 const classModel = require("../models/studentClass");
+const studentModel = require("../models/student");
 
 exports.getStudentClass = async (req, res) => {
   try {
@@ -22,6 +23,10 @@ exports.postStudentClass = async (req, res) => {
   try {
     const { studentClass, student_id } = req.body;
     if (!studentClass || !student_id) {
+      res.status(400).json({ success: false, data: null });
+    }
+    const isValidStudentId = await studentModel.findOne({ _id: student_id });
+    if (!isValidStudentId) {
       res.status(400).json({ success: false, data: null });
     }
     let studentClassData = {

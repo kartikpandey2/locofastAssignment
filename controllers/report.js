@@ -8,7 +8,7 @@ exports.getStudentReport = async (req, res) => {
     if (id) {
       studentReportData = await studentReportModel.findOne({ student_id: id });
     } else {
-      studentReportData = await studentReportModel.findOne({});
+      studentReportData = await studentReportModel.find({});
     }
     res.status(200).json({ success: true, data: studentReportData });
   } catch (err) {
@@ -26,23 +26,37 @@ exports.postStudentReport = async (req, res) => {
         .findOne({ student_id })
         .populate("student_id");
 
-      const studentReport = new studentReportModel({
+      const studentReport = {
         student_id: student.student_id._id,
         class: student.class,
         name: student.student_id.name
-      });
-      studentReportData = studentReport.save();
+      };
+      studentReportData = await studentReportModel.findOneAndUpdate(
+        { student_id: student_id },
+        studentReport,
+        {
+          upsert: true,
+          new: true
+        }
+      );
     } else {
       const studentClassData = await studentClassModel
         .find({})
         .populate("student_id");
       const studentReportPromise = studentClassData.map(student => {
-        const studentReport = new studentReportModel({
+        const studentReport = {
           student_id: student.student_id._id,
           class: student.class,
           name: student.student_id.name
-        });
-        return studentReport.save();
+        };
+        return studentReportModel.findOneAndUpdate(
+          { student_id: student.student_id._id },
+          studentReport,
+          {
+            upsert: true,
+            new: true
+          }
+        );
       });
       studentReportData = await Promise.all(studentReportPromise);
     }
